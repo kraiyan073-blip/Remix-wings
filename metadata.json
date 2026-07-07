@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Wings",
+  "description": "A polished WhatsApp-style messaging app with intelligent Wings Assistant AI support, dynamic chat channels, custom statuses, and interactive media.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
