@@ -3,13 +3,14 @@ const state = {
     currentChannel: 'wings',
     messages: {
         wings: [
-            { id: 1, sender: 'ai', text: 'Hello! 👋 I\'m Wings, your AI assistant. How can I help you today?', timestamp: new Date(Date.now() - 5 * 60000) }
+            { id: 1, sender: 'ai', text: 'Hello! 👋 I\'m Wings, your AI assistant powered by Gemini. How can I help you today?', timestamp: new Date(Date.now() - 5 * 60000) }
         ],
         support: [],
         updates: []
     },
     apiKey: localStorage.getItem('gemini_api_key') || '',
-    theme: localStorage.getItem('theme') || 'dark'
+    theme: localStorage.getItem('theme') || 'dark',
+    isLoading: false
 };
 
 // DOM Elements
@@ -69,7 +70,14 @@ function init() {
 // Send Message
 function sendMessage() {
     const text = messageInput.value.trim();
-    if (!text) return;
+    if (!text || state.isLoading) return;
+
+    // Check if API key is set
+    if (!state.apiKey && state.currentChannel === 'wings') {
+        alert('Please set your Gemini API key in settings first! ⚙️');
+        openSettings();
+        return;
+    }
 
     // Add user message
     const userMessage = {
@@ -90,23 +98,108 @@ function sendMessage() {
     messagesContainer.appendChild(typingIndicator);
     scrollToBottom();
 
-    // Simulate AI response
-    setTimeout(() => {
-        typingIndicator.remove();
-        const aiMessage = {
-            id: Date.now() + 1,
-            sender: 'ai',
-            text: getAIResponse(text),
-            timestamp: new Date()
-        };
-        state.messages[state.currentChannel].push(aiMessage);
-        renderMessages();
-        scrollToBottom();
-    }, 1000 + Math.random() * 2000);
+    state.isLoading = true;
+    sendBtn.disabled = true;
+
+    // Get AI response
+    getAIResponseFromGemini(text)
+        .then((aiResponse) => {
+            typingIndicator.remove();
+            const aiMessage = {
+                id: Date.now() + 1,
+                sender: 'ai',
+                text: aiResponse,
+                timestamp: new Date()
+            };
+            state.messages[state.currentChannel].push(aiMessage);
+            renderMessages();
+            scrollToBottom();
+        })
+        .catch((error) => {
+            typingIndicator.remove();
+            const errorMessage = {
+                id: Date.now() + 1,
+                sender: 'ai',
+                text: `Sorry, I encountered an error: ${error.message}. Please check your API key and try again.`,
+                timestamp: new Date()
+            };
+            state.messages[state.currentChannel].push(errorMessage);
+            renderMessages();
+            scrollToBottom();
+        })
+        .finally(() => {
+            state.isLoading = false;
+            sendBtn.disabled = false;
+        });
 }
 
-// Get AI Response (Mock)
-function getAIResponse(userText) {
+// Get AI Response from Gemini API
+async function getAIResponseFromGemini(userText) {
+    // Validate API key
+    if (!state.apiKey) {
+        throw new Error('API key not configured');
+    }
+
+    try {
+        // Call Gemini API v1beta
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': state.apiKey
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: userText
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    topK: 40,
+                    topP: 0.95,
+                    maxOutputTokens: 1024,
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            
+            if (response.status === 401) {
+                throw new Error('Invalid API key. Please check your key in settings.');
+            }
+            if (response.status === 429) {
+                throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+            }
+            if (response.status === 400) {
+                throw new Error('Bad request: ' + (errorData.error?.message || 'Invalid input'));
+            }
+            
+            throw new Error(errorData.error?.message || `API Error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Extract text from response
+        if (data.candidates && data.candidates.length > 0) {
+            const candidate = data.candidates[0];
+            if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+                return candidate.content.parts[0].text;
+            }
+        }
+
+        throw new Error('No content in response from Gemini API');
+    } catch (error) {
+        if (error instanceof TypeError) {
+            throw new Error('Network error: Unable to reach Gemini API. Check your internet connection.');
+        }
+        throw error;
+    }
+}
+
+// Get AI Response (Fallback for other channels)
+function getAIResponseFallback(userText) {
     const responses = [
         'That\'s a great question! 🤔',
         'I think you\'re absolutely right! ✨',
@@ -178,12 +271,19 @@ function renderMessages() {
         const timeStr = msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         messageGroup.innerHTML = `
             <div class="message ${msg.sender}">
-                ${msg.text}
+                ${escapeHtml(msg.text)}
                 <div class="message-time">${timeStr}</div>
             </div>
         `;
         messagesContainer.appendChild(messageGroup);
     });
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Scroll to bottom
@@ -205,10 +305,10 @@ function closeSettings() {
 }
 
 function saveSettings() {
-    state.apiKey = apiKeyInput.value;
+    state.apiKey = apiKeyInput.value.trim();
     localStorage.setItem('gemini_api_key', state.apiKey);
     closeSettings();
-    alert('Settings saved! ✅');
+    alert('Settings saved! ✅ You can now chat with Wings Assistant.');
 }
 
 function changeTheme() {
