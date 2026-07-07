@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remix: Wings - AI Chat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="chat-header">
+            <div class="header-content">
+                <div class="header-info">
+                    <h1 class="app-title">🪽 Remix: Wings</h1>
+                    <p class="status-text">Wings Assistant Online</p>
+                </div>
+                <div class="header-actions">
+                    <button id="settingsBtn" class="header-btn">⚙️</button>
+                    <button id="menuBtn" class="header-btn">⋯</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Chat Channels Sidebar -->
+            <aside class="sidebar">
+                <div class="channels-header">
+                    <h2>Chats</h2>
+                    <button id="newChatBtn" class="new-chat-btn">+</button>
+                </div>
+                <div id="channelsList" class="channels-list">
+                    <div class="channel active" data-channel="wings">
+                        <div class="channel-icon">🪽</div>
+                        <div class="channel-info">
+                            <h3>Wings Assistant</h3>
+                            <p class="channel-preview">Let's chat...</p>
+                        </div>
+                    </div>
+                    <div class="channel" data-channel="support">
+                        <div class="channel-icon">💬</div>
+                        <div class="channel-info">
+                            <h3>Support Team</h3>
+                            <p class="channel-preview">How can we help?</p>
+                        </div>
+                    </div>
+                    <div class="channel" data-channel="updates">
+                        <div class="channel-icon">📢</div>
+                        <div class="channel-info">
+                            <h3>Updates</h3>
+                            <p class="channel-preview">Latest news...</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <!-- Messages Container -->
+                <div id="messagesContainer" class="messages-container">
+                    <div class="message-group system">
+                        <div class="system-message">
+                            <p>Welcome to Remix: Wings! 🪽</p>
+                            <p>Chat with Wings Assistant powered by Gemini AI</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <footer class="chat-footer">
+                    <div class="input-container">
+                        <button id="attachBtn" class="action-btn" title="Attach file">📎</button>
+                        <input 
+                            type="text" 
+                            id="messageInput" 
+                            class="message-input" 
+                            placeholder="Type a message..."
+                            autocomplete="off"
+                        >
+                        <button id="sendBtn" class="send-btn">Send</button>
+                    </div>
+                    <div class="input-hints">
+                        <span>💡 Tip: Wings AI can help with questions, ideas, and creative writing</span>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-btn">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="apiKeyInput">Gemini API Key:</label>
+                    <input type="password" id="apiKeyInput" class="setting-input" placeholder="Enter your API key">
+                    <small>Your API key is stored locally in your browser</small>
+                </div>
+                <div class="setting-group">
+                    <label for="themeSelect">Theme:</label>
+                    <select id="themeSelect" class="setting-input">
+                        <option value="light">Light</option>
+                        <option value="dark" selected>Dark</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label>
+                        <input type="checkbox" id="notificationsToggle" checked>
+                        Enable Notifications
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveSettingsBtn" class="btn-primary">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="modalOverlay" class="modal-overlay"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
